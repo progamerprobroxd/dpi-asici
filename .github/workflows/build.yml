@@ -69,7 +69,19 @@ jobs:
           gradle-version: '8.7'
 
       - name: APK derle
-        run: gradle assembleRelease --no-daemon --stacktrace
+        run: |
+          set +e
+          gradle assembleRelease --no-daemon --console=plain > "$RUNNER_TEMP/gradle.log" 2>&1
+          CODE=$?
+          if [ "$CODE" -ne 0 ]; then
+            echo "=================== HATA ÖZETİ ==================="
+            grep -n -A14 "What went wrong" "$RUNNER_TEMP/gradle.log" | head -60
+            grep -n -E "^e: |error:|AAPT" "$RUNNER_TEMP/gradle.log" | head -30
+            echo "=================== ÖZET SONU ===================="
+          else
+            tail -5 "$RUNNER_TEMP/gradle.log"
+          fi
+          exit $CODE
 
       - name: APK'yı sakla
         uses: actions/upload-artifact@v4
