@@ -46,6 +46,9 @@ android {
 }
 
 repositories {
+    // Projede depo tanımlanınca settings.gradle'daki depolar yok sayılır; bu yüzden burada da var.
+    google()
+    mavenCentral()
     // gomobile'ın ürettiği core.aar buradan alınır.
     flatDir { dirs 'libs' }
 }
