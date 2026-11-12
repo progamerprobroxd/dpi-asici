@@ -48,13 +48,21 @@ jobs:
           gomobile bind -v -target=android/arm64 -androidapi 26 \
             -ldflags="-s -w" -o ../app/libs/core.aar .
 
-      - name: AAR içeriğini kontrol et
+      - name: AAR içeriğini oku ve Kotlin içe aktarmasını düzelt
         run: |
-          set -eux
-          unzip -l app/libs/core.aar
+          set -eu
           unzip -p app/libs/core.aar classes.jar > "$RUNNER_TEMP/classes.jar"
-          unzip -l "$RUNNER_TEMP/classes.jar" | grep "go/core/Core.class" \
-            || { echo "::error::go/core/Core.class bulunamadı: Kotlin kodundaki 'import go.core.Core' satırını AAR'daki gerçek pakete göre düzelt"; exit 1; }
+          echo "--- classes.jar içeriği:"
+          unzip -Z1 "$RUNNER_TEMP/classes.jar"
+          CLS="$(unzip -Z1 "$RUNNER_TEMP/classes.jar" | grep -E '(^|/)Core\.class$' | head -1 || true)"
+          if [ -z "$CLS" ]; then
+            echo "::error::Core sınıfı AAR içinde bulunamadı; yukarıdaki sınıf listesini gönder"
+            exit 1
+          fi
+          PKG="$(dirname "$CLS" | tr '/' '.')"
+          echo "Core sınıfı: $CLS, paket: $PKG"
+          sed -i "s/^import go\.core\.Core$/import $PKG.Core/" app/src/main/kotlin/com/dpiasici/app/*.kt
+          grep -n "^import .*Core$" app/src/main/kotlin/com/dpiasici/app/*.kt
 
       - uses: gradle/actions/setup-gradle@v4
         with:
