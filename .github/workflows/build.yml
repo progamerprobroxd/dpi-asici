@@ -1,0 +1,73 @@
+name: APK derle
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+          cache: false
+
+      - name: Go çekirdeğini Android kitaplığına (AAR) çevir
+        working-directory: core
+        run: |
+          set -euxo pipefail
+          # Denenen gVisor sürümü sabitlenir; böylece API değişse de derleme bozulmaz.
+          go get gvisor.dev/gvisor@15a1a0dd762087ef4665c41876d6522cb826a0a7
+          go get golang.org/x/mobile/bind
+          go mod tidy
+          go install golang.org/x/mobile/cmd/gomobile@latest
+          go install golang.org/x/mobile/cmd/gobind@latest
+          export PATH="$PATH:$(go env GOPATH)/bin"
+          export ANDROID_NDK_HOME="${ANDROID_NDK_LATEST_HOME:-${ANDROID_NDK_HOME:-$ANDROID_NDK_ROOT}}"
+          echo "NDK: $ANDROID_NDK_HOME"
+          gomobile init
+          mkdir -p ../app/libs
+          gomobile bind -v -target=android/arm64 -androidapi 26 \
+            -ldflags="-s -w" -o ../app/libs/core.aar .
+
+      - name: AAR içeriğini kontrol et
+        run: |
+          set -eux
+          unzip -l app/libs/core.aar
+          unzip -p app/libs/core.aar classes.jar > "$RUNNER_TEMP/classes.jar"
+          unzip -l "$RUNNER_TEMP/classes.jar" | grep "go/core/Core.class" \
+            || { echo "::error::go/core/Core.class bulunamadı: Kotlin kodundaki 'import go.core.Core' satırını AAR'daki gerçek pakete göre düzelt"; exit 1; }
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: APK derle
+        run: gradle assembleRelease --no-daemon --stacktrace
+
+      - name: APK'yı sakla
+        uses: actions/upload-artifact@v4
+        with:
+          name: dpi-asici-apk
+          path: app/build/outputs/apk/release/*.apk
+
+      - name: Sürüm olarak yayınla (telefondan doğrudan indirmek için)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: DPI Aşıcı build ${{ github.run_number }}
+          prerelease: true
+          files: app/build/outputs/apk/release/*.apk

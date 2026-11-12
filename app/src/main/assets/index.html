@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>DPI Aşıcı</title>
+<style>
+@property --glow { syntax: '<number>'; inherits: true; initial-value: 0; }
+:root {
+  --gece: #101426;
+  --gece-ust: #161c36;
+  --cizgi: #252c4a;
+  --metin: #eef1fa;
+  --soluk: #98a2c3;
+  --acik: #3ee0b0;
+  --acik-koyu: #0d3a3a;
+  --hata: #ff8d7a;
+  --ring-kapali: #46507a;
+  --r: 14px;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html { background: var(--gece); }
+body {
+  margin: 0; min-height: 100vh; color: var(--metin);
+  font: 16px/1.45 Roboto, "Segoe UI", system-ui, sans-serif;
+  background:
+    radial-gradient(120% 60% at 50% 0%, rgba(62,224,176,var(--glow, 0)) 0%, rgba(62,224,176,0) 70%),
+    var(--gece);
+  transition: --glow .6s;
+  padding: max(20px, env(safe-area-inset-top)) 20px max(28px, env(safe-area-inset-bottom));
+  -webkit-user-select: none; user-select: none;
+}
+body.on { --glow: .16; }
+main { max-width: 440px; margin: 0 auto; }
+
+header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+h1 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: .2px; }
+.net {
+  display: inline-flex; align-items: center; gap: 8px; max-width: 62%;
+  padding: 6px 12px; border-radius: 999px; background: var(--gece-ust);
+  font-size: 13px; color: var(--soluk); white-space: nowrap;
+}
+.net span { overflow: hidden; text-overflow: ellipsis; }
+.net i { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--ring-kapali); }
+body.on .net i { background: var(--acik); }
+body.nonet .net i { background: var(--hata); }
+
+/* --- Kahraman: parçalı halka düğme --- */
+.hero { display: flex; flex-direction: column; align-items: center; padding: 34px 0 8px; text-align: center; }
+.power {
+  position: relative; width: 208px; height: 208px; padding: 0; border: 0; border-radius: 50%;
+  background: radial-gradient(closest-side, var(--gece-ust) 78%, transparent 79%);
+  color: var(--ring-kapali); cursor: pointer; transition: color .4s, transform .15s;
+}
+.power:active { transform: scale(.97); }
+.power:focus-visible { outline: 3px solid var(--metin); outline-offset: 6px; }
+.power svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.ring { transform-origin: 50% 50%; }
+.ring circle { fill: none; stroke: currentColor; stroke-width: 7; stroke-linecap: round; stroke-dasharray: 16 8 5 8 38 8 10 8; }
+.glyph { stroke: currentColor; fill: none; stroke-width: 7; stroke-linecap: round; }
+body.on .power { color: var(--acik); }
+body.on .ring { animation: don 26s linear infinite; }
+body.busy .ring { animation: don 3s linear infinite; }
+body.busy .power { color: var(--soluk); }
+@keyframes don { to { transform: rotate(360deg); } }
+.halo {
+  position: absolute; inset: -22px; border-radius: 50%; opacity: 0; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(62,224,176,.22), rgba(62,224,176,0) 72%);
+  transition: opacity .6s;
+}
+body.on .halo { opacity: 1; }
+
+h2 { margin: 26px 0 4px; font-size: 34px; line-height: 1.1; font-weight: 800; letter-spacing: -.5px; }
+#sub { margin: 0; min-height: 44px; max-width: 30ch; color: var(--soluk); font-size: 15px; }
+#sub.err { color: var(--hata); }
+
+/* --- Sayaçlar --- */
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); margin: 24px 0 8px; border-top: 1px solid var(--cizgi); border-bottom: 1px solid var(--cizgi); }
+.stats div { padding: 16px 0 14px; text-align: center; }
+.stats div + div { border-left: 1px solid var(--cizgi); }
+.stats dt { margin: 0; color: var(--soluk); font-size: 13px; }
+.stats dd { margin: 2px 0 0; font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+body:not(.on) .stats dd { color: var(--soluk); }
+
+/* --- Bölümler --- */
+section.row { padding: 20px 0; border-bottom: 1px solid var(--cizgi); }
+section.row h3 { margin: 0 0 4px; font-size: 16px; font-weight: 700; }
+.muted { margin: 0; color: var(--soluk); font-size: 14px; }
+.kv { display: flex; justify-content: space-between; gap: 16px; padding: 4px 0; font-size: 15px; }
+.kv b { font-weight: 500; color: var(--soluk); }
+.kv span { text-align: right; }
+
+.seg { position: relative; display: grid; grid-template-columns: 1fr 1fr; margin: 14px 0 12px; padding: 3px; border-radius: var(--r); background: var(--gece-ust); }
+.seg button {
+  position: relative; z-index: 1; padding: 10px 0; border: 0; background: none; color: var(--soluk);
+  font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; transition: color .2s;
+}
+.seg button[aria-checked="true"] { color: var(--gece); }
+.seg::before {
+  content: ""; position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc(50% - 3px);
+  border-radius: 11px; background: var(--acik); transition: transform .22s cubic-bezier(.3,.8,.3,1);
+}
+.seg[data-v="elle"]::before { transform: translateX(100%); }
+.seg button:focus-visible { outline: 2px solid var(--metin); outline-offset: 2px; border-radius: 11px; }
+
+.list { display: none; margin: 0; padding: 0; list-style: none; }
+.list.open { display: block; }
+.list li { border-top: 1px solid var(--cizgi); }
+.list button {
+  display: grid; grid-template-columns: 22px 1fr; column-gap: 12px; width: 100%; padding: 12px 0;
+  border: 0; background: none; color: var(--metin); font: inherit; text-align: left; cursor: pointer;
+}
+.list button:focus-visible { outline: 2px solid var(--metin); outline-offset: -2px; border-radius: 8px; }
+.list .o { grid-row: span 2; align-self: center; width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--ring-kapali); }
+.list [aria-checked="true"] .o { border: 5px solid var(--acik); }
+.list small { color: var(--soluk); font-size: 13px; }
+
+details { padding: 18px 0 0; }
+summary { cursor: pointer; font-weight: 600; font-size: 15px; list-style: none; }
+summary::-webkit-details-marker { display: none; }
+summary::after { content: "+"; float: right; color: var(--soluk); font-size: 20px; line-height: 1; }
+details[open] summary::after { content: "–"; }
+details ul { margin: 12px 0; padding-left: 18px; color: var(--soluk); font-size: 14px; }
+details li + li { margin-top: 6px; }
+.btn {
+  display: inline-block; margin-top: 4px; padding: 11px 16px; border: 1px solid var(--ring-kapali); border-radius: var(--r);
+  background: none; color: var(--metin); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.btn:active { background: var(--gece-ust); }
+
+@media (prefers-reduced-motion: reduce) {
+  body.on .ring, body.busy .ring { animation: none; }
+  .seg::before, .halo { transition: none; }
+}
+@media (max-height: 640px) { .hero { padding-top: 16px; } .power { width: 172px; height: 172px; } h2 { margin-top: 16px; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>DPI Aşıcı</h1>
+    <div class="net" id="net"><i></i><span id="netText">Ağ aranıyor</span></div>
+  </header>
+
+  <section class="hero">
+    <button class="power" id="power" aria-pressed="false" aria-label="Başlat">
+      <div class="halo"></div>
+      <svg viewBox="0 0 200 200" aria-hidden="true">
+        <g class="ring"><circle cx="100" cy="100" r="95.49"/></g>
+        <path class="glyph" d="M100 62v36M76 78a38 38 0 1 0 48 0"/>
+      </svg>
+    </button>
+    <h2 id="state">Kapalı</h2>
+    <p id="sub">Başlatmak için dokun.</p>
+  </section>
+
+  <dl class="stats">
+    <div><dt>Bağlantı</dt><dd id="sAct">0</dd></div>
+    <div><dt>İndirilen</dt><dd id="sDown">0 B</dd></div>
+    <div><dt>Gönderilen</dt><dd id="sUp">0 B</dd></div>
+  </dl>
+
+  <section class="row">
+    <h3>Yöntem</h3>
+    <div class="seg" id="seg" role="radiogroup" aria-label="Yöntem seçimi" data-v="auto">
+      <button role="radio" id="bAuto" aria-checked="true">Otomatik</button>
+      <button role="radio" id="bManual" aria-checked="false">Elle seç</button>
+    </div>
+    <p class="muted" id="modeNote">Her ağda çalışan yöntemi kendisi bulur ve hatırlar.</p>
+    <ul class="list" id="list" role="radiogroup" aria-label="Parçalama yöntemi"></ul>
+  </section>
+
+  <section class="row" id="netRow">
+    <div class="kv"><b>Ağ</b><span id="kvNet">–</span></div>
+    <div class="kv"><b>Çalışan yöntem</b><span id="kvStrat">–</span></div>
+    <div class="kv"><b>Yeniden denenen</b><span id="kvFb">0</span></div>
+  </section>
+
+  <details>
+    <summary>Telefon ısınıyor veya bağlantı kopuyor mu?</summary>
+    <ul>
+      <li>Pil ayarlarında bu uygulama için “Kısıtlama yok” seç; sistem arka planda kapatmaz.</li>
+      <li>Son uygulamalar ekranında uygulama kartını kilitle.</li>
+      <li>Kullanmadığın zaman düğmeyle kapat; kapalıyken hiçbir işlem yapılmaz.</li>
+    </ul>
+    <button class="btn" id="battery">Pil ayarlarını aç</button>
+  </details>
+</main>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var METHODS = [
+    ['s0', 'SNI bölme', 'Site adının ortasından ikiye böler'],
+    ['s1', 'TLS ve TCP', 'Hem TLS hem TCP seviyesinde böler'],
+    ['s2', 'İlk bayt', 'İlk baytı tek başına gönderir'],
+    ['s3', '3 parça', 'Üç parçaya böler'],
+    ['s4', 'TLS kayıt', 'İki TLS kaydı olarak gönderir'],
+    ['s5', 'Düz', 'Parçalamaz; karşılaştırma için']
+  ];
+
+  /* Tarayıcıda denemek için sahte köprü (?demo=on|off|wifi|hata|elle). */
+  function mockBridge() {
+    var q = new URLSearchParams(location.search).get('demo') || 'off';
+    var st = { running: q !== 'off' && q !== 'hata', mode: q === 'elle' ? 's2' : 'auto',
+      net: { type: q === 'wifi' ? 'wifi' : 'mobile', operator: 'Turkcell' },
+      error: q === 'hata' ? 'VPN izni verilmedi. Tekrar dokun ve izin ver.' : '',
+      stats: { active: 14, down: 183500000, up: 9400000, strategy: 'İlk bayt', fallbacks: 3 } };
+    return {
+      state: function () { if (st.running) { st.stats.down += 91000; st.stats.up += 6000; } return JSON.stringify(st); },
+      toggle: function () { st.running = !st.running; st.error = ''; },
+      setMode: function (m) { st.mode = m; },
+      batterySettings: function () {}
+    };
+  }
+  var bridge = window.Android || mockBridge();
+
+  function fmtBytes(b) {
+    if (b < 1024) return b + ' B';
+    var u = ['KB', 'MB', 'GB', 'TB'], i = -1;
+    do { b /= 1024; i++; } while (b >= 1024 && i < 3);
+    return (b >= 100 ? b.toFixed(0) : b.toFixed(1)).replace('.', ',') + ' ' + u[i];
+  }
+  function netLabel(n) {
+    if (!n || n.type === 'none') return 'Bağlantı yok';
+    var t = n.type === 'wifi' ? 'Wi-Fi' : 'Mobil veri';
+    return n.type === 'wifi' || !n.operator ? t : n.operator + ' · ' + t;
+  }
+
+  var pendingUntil = 0, listBuilt = false, manualOpen = false;
+
+  function buildList() {
+    var ul = $('list');
+    METHODS.forEach(function (m) {
+      var li = document.createElement('li'), b = document.createElement('button');
+      b.setAttribute('role', 'radio'); b.dataset.m = m[0];
+      b.innerHTML = '<span class="o"></span><span></span><small></small>';
+      b.children[1].textContent = m[1]; b.children[2].textContent = m[2];
+      b.onclick = function () { bridge.setMode(m[0]); poll(); };
+      li.appendChild(b); ul.appendChild(li);
+    });
+    listBuilt = true;
+  }
+
+  function render(s) {
+    var running = !!s.running, busy = !running && Date.now() < pendingUntil && !s.error;
+    if (running || s.error) pendingUntil = 0;
+    var cls = document.body.classList;
+    cls.toggle('on', running); cls.toggle('busy', busy);
+    cls.toggle('nonet', !!s.net && s.net.type === 'none');
+
+    $('power').setAttribute('aria-pressed', running ? 'true' : 'false');
+    $('power').setAttribute('aria-label', running ? 'Kapat' : 'Başlat');
+    $('state').textContent = busy ? 'Başlatılıyor' : running ? 'Açık' : 'Kapalı';
+    var sub = $('sub');
+    sub.className = s.error ? 'err' : '';
+    sub.textContent = s.error ? s.error :
+      busy ? 'İzin penceresi çıkarsa onayla.' :
+      running ? 'Bağlantılar parçalanarak gönderiliyor.' : 'Başlatmak için dokun.';
+
+    var label = netLabel(s.net);
+    $('netText').textContent = label; $('kvNet').textContent = label;
+
+    var st = s.stats || {};
+    $('sAct').textContent = st.active || 0;
+    $('sDown').textContent = fmtBytes(st.down || 0);
+    $('sUp').textContent = fmtBytes(st.up || 0);
+    $('kvStrat').textContent = running ? (st.strategy || '–') : '–';
+    $('kvFb').textContent = st.fallbacks || 0;
+
+    var manual = s.mode && s.mode !== 'auto';
+    if (!listBuilt) buildList();
+    if (manual) manualOpen = true;
+    var showList = manualOpen;
+    $('seg').dataset.v = showList ? 'elle' : 'auto';
+    $('bAuto').setAttribute('aria-checked', showList ? 'false' : 'true');
+    $('bManual').setAttribute('aria-checked', showList ? 'true' : 'false');
+    $('list').classList.toggle('open', showList);
+    $('modeNote').textContent = !showList
+      ? 'Her ağda çalışan yöntemi kendisi bulur ve hatırlar.'
+      : manual
+        ? 'Seçtiğin yöntem çalışmazsa bağlantılar açılmaz; Otomatik’e dönebilirsin.'
+        : 'Listeden bir yöntem seç. Seçene kadar Otomatik çalışır.';
+    Array.prototype.forEach.call($('list').querySelectorAll('button'), function (b) {
+      b.setAttribute('aria-checked', b.dataset.m === s.mode ? 'true' : 'false');
+    });
+  }
+
+  function poll() {
+    if (document.hidden) return;
+    try { render(JSON.parse(bridge.state())); } catch (e) { /* köprü hazır değil */ }
+  }
+
+  $('power').onclick = function () {
+    pendingUntil = Date.now() + 9000;
+    bridge.toggle();
+    poll();
+  };
+  $('bAuto').onclick = function () { manualOpen = false; bridge.setMode('auto'); poll(); };
+  $('bManual').onclick = function () { manualOpen = true; poll(); };
+  $('battery').onclick = function () { bridge.batterySettings(); };
+
+  document.addEventListener('visibilitychange', poll);
+  setInterval(poll, 1500);
+  poll();
+})();
+</script>
+</body>
+</html>

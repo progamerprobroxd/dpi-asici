@@ -1,0 +1,7 @@
+.gradle/
+build/
+local.properties
+app/libs/*.aar
+core/go.sum
+shots/
+*.log
