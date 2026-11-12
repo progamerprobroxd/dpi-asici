@@ -175,7 +175,7 @@ class MainActivity : Activity() {
         fun batterySettings() {
             runOnUiThread {
                 try {
-                    startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATIONS_SETTINGS))
+                    startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
                 } catch (e: Exception) {
                     try {
                         startActivity(
