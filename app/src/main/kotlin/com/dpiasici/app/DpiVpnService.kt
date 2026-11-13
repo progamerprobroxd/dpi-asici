@@ -105,10 +105,24 @@ class DpiVpnService : VpnService() {
         netCallback = null
     }
 
+    /** Bildirim metinleri: kanal adı, başlık, açıklama, "kapat" düğmesi. */
+    private fun texts(): List<String> {
+        val saved = getSharedPreferences("ayar", MODE_PRIVATE).getString("lang", "") ?: ""
+        val l = if (saved.isNotEmpty()) saved else java.util.Locale.getDefault().language
+        return when (l) {
+            "tr" -> listOf("VPN durumu", "DPI Aşıcı açık", "Bağlantılar parçalanarak gönderiliyor.", "Kapat")
+            "ru" -> listOf("Состояние VPN", "DPI Aşıcı включён", "Соединения отправляются по частям.", "Выключить")
+            "es" -> listOf("Estado de la VPN", "DPI Aşıcı encendido", "Las conexiones se envían fragmentadas.", "Apagar")
+            "zh" -> listOf("VPN 状态", "DPI Aşıcı 已开启", "连接正在被分片发送。", "关闭")
+            else -> listOf("VPN status", "DPI Aşıcı is on", "Connections are being sent in pieces.", "Stop")
+        }
+    }
+
     private fun showNotification() {
+        val tx = texts()
         val nm = getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(
-            NotificationChannel(CHANNEL, "VPN durumu", NotificationManager.IMPORTANCE_LOW)
+            NotificationChannel(CHANNEL, tx[0], NotificationManager.IMPORTANCE_LOW)
         )
         val open = PendingIntent.getActivity(
             this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE
@@ -120,10 +134,10 @@ class DpiVpnService : VpnService() {
         @Suppress("DEPRECATION")
         val n = Notification.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_notif)
-            .setContentTitle("DPI Aşıcı açık")
-            .setContentText("Bağlantılar parçalanarak gönderiliyor.")
+            .setContentTitle(tx[1])
+            .setContentText(tx[2])
             .setContentIntent(open)
-            .addAction(R.drawable.ic_notif, "Kapat", stop)
+            .addAction(R.drawable.ic_notif, tx[3], stop)
             .setOngoing(true)
             .build()
         startForeground(NOTIF_ID, n)
