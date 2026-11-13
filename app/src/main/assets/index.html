@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="tr">
+<html lang="tr" data-theme="modern">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -7,17 +7,34 @@
 <title>DPI Aşıcı</title>
 <style>
 @property --glow { syntax: '<number>'; inherits: true; initial-value: 0; }
-:root {
+:root {                       /* Modern (varsayılan): mor, beyaz, siyah */
+  --gece: #0c0a14;
+  --gece-ust: #181327;
+  --cizgi: #2a2142;
+  --metin: #ffffff;
+  --soluk: #b6acd0;
+  --acik: #a78bfa;               /* vurgu çizgi/halka */
+  --dolgu: #7c3aed;              /* dolu yüzeyler */
+  --dolgu-metin: #ffffff;
+  --glyph-on: #ffffff;
+  --rgb: 167,139,250;
+  --hata: #ff9a8a;
+  --ring-kapali: #4b3f72;
+  --r: 14px;
+}
+:root[data-theme="classic"] {
   --gece: #101426;
   --gece-ust: #161c36;
   --cizgi: #252c4a;
   --metin: #eef1fa;
   --soluk: #98a2c3;
   --acik: #3ee0b0;
-  --acik-koyu: #0d3a3a;
+  --dolgu: #3ee0b0;
+  --dolgu-metin: #101426;
+  --glyph-on: currentColor;
+  --rgb: 62,224,176;
   --hata: #ff8d7a;
   --ring-kapali: #46507a;
-  --r: 14px;
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html { background: var(--gece); }
@@ -25,7 +42,7 @@ body {
   margin: 0; min-height: 100vh; color: var(--metin);
   font: 16px/1.45 Roboto, "Segoe UI", system-ui, sans-serif;
   background:
-    radial-gradient(120% 60% at 50% 0%, rgba(62,224,176,var(--glow, 0)) 0%, rgba(62,224,176,0) 70%),
+    radial-gradient(120% 60% at 50% 0%, rgba(var(--rgb),var(--glow, 0)) 0%, rgba(var(--rgb),0) 70%),
     var(--gece);
   transition: --glow .6s;
   padding: max(20px, env(safe-area-inset-top)) 20px max(28px, env(safe-area-inset-bottom));
@@ -34,10 +51,16 @@ body {
 body.on { --glow: .16; }
 main { max-width: 440px; margin: 0 auto; }
 
-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+header { display: flex; align-items: center; gap: 10px; }
+header h1 { flex: none; }
+.net-wrap { flex: 1; min-width: 0; display: flex; justify-content: flex-end; }
+.gear { flex: none; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: var(--gece-ust); color: var(--soluk); cursor: pointer; display: grid; place-items: center; }
+.gear svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.gear[aria-expanded="true"] { color: var(--metin); }
+.gear:focus-visible { outline: 2px solid var(--metin); outline-offset: 2px; }
 h1 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: .2px; }
 .net {
-  display: inline-flex; align-items: center; gap: 8px; max-width: 62%;
+  display: inline-flex; align-items: center; gap: 8px; max-width: 100%; min-width: 0;
   padding: 6px 12px; border-radius: 999px; background: var(--gece-ust);
   font-size: 13px; color: var(--soluk); white-space: nowrap;
 }
@@ -58,15 +81,16 @@ body.nonet .net i { background: var(--hata); }
 .power svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 .ring { transform-origin: 50% 50%; }
 .ring circle { fill: none; stroke: currentColor; stroke-width: 7; stroke-linecap: round; stroke-dasharray: 16 8 5 8 38 8 10 8; }
-.glyph { stroke: currentColor; fill: none; stroke-width: 7; stroke-linecap: round; }
+.glyph { stroke: currentColor; transition: stroke .4s; fill: none; stroke-width: 7; stroke-linecap: round; }
 body.on .power { color: var(--acik); }
+body.on .glyph { stroke: var(--glyph-on); }
 body.on .ring { animation: don 26s linear infinite; }
 body.busy .ring { animation: don 3s linear infinite; }
 body.busy .power { color: var(--soluk); }
 @keyframes don { to { transform: rotate(360deg); } }
 .halo {
   position: absolute; inset: -22px; border-radius: 50%; opacity: 0; pointer-events: none;
-  background: radial-gradient(closest-side, rgba(62,224,176,.22), rgba(62,224,176,0) 72%);
+  background: radial-gradient(closest-side, rgba(var(--rgb),.26), rgba(var(--rgb),0) 72%);
   transition: opacity .6s;
 }
 body.on .halo { opacity: 1; }
@@ -96,12 +120,12 @@ section.row h3 { margin: 0 0 4px; font-size: 16px; font-weight: 700; }
   position: relative; z-index: 1; padding: 10px 0; border: 0; background: none; color: var(--soluk);
   font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; transition: color .2s;
 }
-.seg button[aria-checked="true"] { color: var(--gece); }
+.seg button[aria-checked="true"] { color: var(--dolgu-metin); }
 .seg::before {
   content: ""; position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc(50% - 3px);
-  border-radius: 11px; background: var(--acik); transition: transform .22s cubic-bezier(.3,.8,.3,1);
+  border-radius: 11px; background: var(--dolgu); transition: transform .22s cubic-bezier(.3,.8,.3,1);
 }
-.seg[data-v="elle"]::before { transform: translateX(100%); }
+.seg[data-v="b"]::before { transform: translateX(100%); }
 .seg button:focus-visible { outline: 2px solid var(--metin); outline-offset: 2px; border-radius: 11px; }
 
 .list { display: none; margin: 0; padding: 0; list-style: none; }
@@ -114,6 +138,7 @@ section.row h3 { margin: 0 0 4px; font-size: 16px; font-weight: 700; }
 .list button:focus-visible { outline: 2px solid var(--metin); outline-offset: -2px; border-radius: 8px; }
 .list .o { grid-row: span 2; align-self: center; width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--ring-kapali); }
 .list [aria-checked="true"] .o { border: 5px solid var(--acik); }
+
 .list small { color: var(--soluk); font-size: 13px; }
 
 details { padding: 18px 0 0; }
@@ -127,6 +152,12 @@ details li + li { margin-top: 6px; }
   display: inline-block; margin-top: 4px; padding: 11px 16px; border: 1px solid var(--ring-kapali); border-radius: var(--r);
   background: none; color: var(--metin); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
 }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 18px; }
+.chip { padding: 9px 14px; border: 1px solid var(--cizgi); border-radius: 999px; background: none; color: var(--soluk); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.chip[aria-checked="true"] { border-color: var(--acik); color: var(--metin); background: var(--gece-ust); }
+.chip:focus-visible { outline: 2px solid var(--metin); outline-offset: 2px; }
+#settings h3 + .chips { margin-bottom: 20px; }
+#settings .seg { margin-top: 10px; margin-bottom: 0; }
 .btn:active { background: var(--gece-ust); }
 
 @media (prefers-reduced-motion: reduce) {
@@ -140,51 +171,64 @@ details li + li { margin-top: 6px; }
 <main>
   <header>
     <h1>DPI Aşıcı</h1>
-    <div class="net" id="net"><i></i><span id="netText">Ağ aranıyor</span></div>
+    <div class="net-wrap"><div class="net" id="net"><i></i><span id="netText"></span></div></div>
+    <button class="gear" id="gear" aria-expanded="false" aria-controls="settings">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h11M18 7h3M3 17h3M10 17h11"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>
+    </button>
   </header>
 
+  <section class="row" id="settings" hidden>
+    <h3 data-i="language"></h3>
+    <div class="chips" id="langs" role="radiogroup"></div>
+    <h3 data-i="theme"></h3>
+    <div class="seg" id="themeSeg" role="radiogroup" data-v="a">
+      <button role="radio" id="tModern" aria-checked="true" data-i="themeModern"></button>
+      <button role="radio" id="tClassic" aria-checked="false" data-i="themeClassic"></button>
+    </div>
+  </section>
+
   <section class="hero">
-    <button class="power" id="power" aria-pressed="false" aria-label="Başlat">
+    <button class="power" id="power" aria-pressed="false" >
       <div class="halo"></div>
       <svg viewBox="0 0 200 200" aria-hidden="true">
         <g class="ring"><circle cx="100" cy="100" r="95.49"/></g>
         <path class="glyph" d="M100 62v36M76 78a38 38 0 1 0 48 0"/>
       </svg>
     </button>
-    <h2 id="state">Kapalı</h2>
-    <p id="sub">Başlatmak için dokun.</p>
+    <h2 id="state"></h2>
+    <p id="sub"></p>
   </section>
 
   <dl class="stats">
-    <div><dt>Bağlantı</dt><dd id="sAct">0</dd></div>
-    <div><dt>İndirilen</dt><dd id="sDown">0 B</dd></div>
-    <div><dt>Gönderilen</dt><dd id="sUp">0 B</dd></div>
+    <div><dt data-i="conns"></dt><dd id="sAct">0</dd></div>
+    <div><dt data-i="down"></dt><dd id="sDown">0 B</dd></div>
+    <div><dt data-i="up"></dt><dd id="sUp">0 B</dd></div>
   </dl>
 
   <section class="row">
-    <h3>Yöntem</h3>
-    <div class="seg" id="seg" role="radiogroup" aria-label="Yöntem seçimi" data-v="auto">
-      <button role="radio" id="bAuto" aria-checked="true">Otomatik</button>
-      <button role="radio" id="bManual" aria-checked="false">Elle seç</button>
+    <h3 data-i="method"></h3>
+    <div class="seg" id="seg" role="radiogroup" data-v="a">
+      <button role="radio" id="bAuto" aria-checked="true" data-i="auto"></button>
+      <button role="radio" id="bManual" aria-checked="false" data-i="manual"></button>
     </div>
-    <p class="muted" id="modeNote">Her ağda çalışan yöntemi kendisi bulur ve hatırlar.</p>
-    <ul class="list" id="list" role="radiogroup" aria-label="Parçalama yöntemi"></ul>
+    <p class="muted" id="modeNote"></p>
+    <ul class="list" id="list" role="radiogroup"></ul>
   </section>
 
   <section class="row" id="netRow">
-    <div class="kv"><b>Ağ</b><span id="kvNet">–</span></div>
-    <div class="kv"><b>Çalışan yöntem</b><span id="kvStrat">–</span></div>
-    <div class="kv"><b>Yeniden denenen</b><span id="kvFb">0</span></div>
+    <div class="kv"><b data-i="kvNet"></b><span id="kvNet">–</span></div>
+    <div class="kv"><b data-i="kvStrat"></b><span id="kvStrat">–</span></div>
+    <div class="kv"><b data-i="kvFb"></b><span id="kvFb">0</span></div>
   </section>
 
   <details>
-    <summary>Telefon ısınıyor veya bağlantı kopuyor mu?</summary>
+    <summary data-i="helpQ"></summary>
     <ul>
-      <li>Pil ayarlarında bu uygulama için “Kısıtlama yok” seç; sistem arka planda kapatmaz.</li>
-      <li>Son uygulamalar ekranında uygulama kartını kilitle.</li>
-      <li>Kullanmadığın zaman düğmeyle kapat; kapalıyken hiçbir işlem yapılmaz.</li>
+      <li data-i="h1"></li>
+      <li data-i="h2"></li>
+      <li data-i="h3"></li>
     </ul>
-    <button class="btn" id="battery">Pil ayarlarını aç</button>
+    <button class="btn" id="battery" data-i="battery"></button>
   </details>
 </main>
 
@@ -192,120 +236,140 @@ details li + li { margin-top: 6px; }
 (function () {
   'use strict';
   var $ = function (id) { return document.getElementById(id); };
-  var METHODS = [
-    ['s0', 'SNI bölme', 'Site adının ortasından ikiye böler'],
-    ['s1', 'TLS ve TCP', 'Hem TLS hem TCP seviyesinde böler'],
-    ['s2', 'İlk bayt', 'İlk baytı tek başına gönderir'],
-    ['s3', '3 parça', 'Üç parçaya böler'],
-    ['s4', 'TLS kayıt', 'İki TLS kaydı olarak gönderir'],
-    ['s5', 'Düz', 'Parçalamaz; karşılaştırma için']
-  ];
+
+  var LANGS = ['tr', 'en', 'ru', 'es', 'zh'];
+  var NATIVE = { tr: 'Türkçe', en: 'English', ru: 'Русский', es: 'Español', zh: '中文' };
+  var THEMES = ['modern', 'classic'];
+  var METHOD_IDS = ['s0', 's1', 's2', 's3', 's4', 's5'];
+  // Çekirdek yöntem adlarını Türkçe döndürür; sırası yöntem numarasıdır.
+  var CORE_NAMES = ['SNI bölme', 'TLS+TCP', 'İlk bayt', '3 parça', 'TLS kayıt', 'Düz'];
+
+  var I18N = {
+    tr: {
+      netSearch: 'Ağ aranıyor', noNet: 'Bağlantı yok', wifi: 'Wi-Fi', mobile: 'Mobil veri',
+      off: 'Kapalı', on: 'Açık', starting: 'Başlatılıyor', start: 'Başlat', stop: 'Kapat',
+      tapStart: 'Başlatmak için dokun.', permHint: 'İzin penceresi çıkarsa onayla.',
+      running: 'Bağlantılar parçalanarak gönderiliyor.',
+      conns: 'Bağlantı', down: 'İndirilen', up: 'Gönderilen',
+      method: 'Yöntem', auto: 'Otomatik', manual: 'Elle seç',
+      noteAuto: 'Her ağda çalışan yöntemi kendisi bulur ve hatırlar.',
+      noteManual: 'Seçtiğin yöntem çalışmazsa bağlantılar açılmaz; Otomatik’e dönebilirsin.',
+      noteChoose: 'Listeden bir yöntem seç. Seçene kadar Otomatik çalışır.',
+      kvNet: 'Ağ', kvStrat: 'Çalışan yöntem', kvFb: 'Yeniden denenen',
+      helpQ: 'Telefon ısınıyor veya bağlantı kopuyor mu?',
+      h1: 'Pil ayarlarında bu uygulama için “Kısıtlama yok” seç; sistem arka planda kapatmaz.',
+      h2: 'Son uygulamalar ekranında uygulama kartını kilitle.',
+      h3: 'Kullanmadığın zaman düğmeyle kapat; kapalıyken hiçbir işlem yapılmaz.',
+      battery: 'Pil ayarlarını aç',
+      language: 'Dil', theme: 'Tema', themeModern: 'Modern', themeClassic: 'Klasik',
+      errPerm: 'VPN izni verilmedi. Tekrar dokun ve izin ver.',
+      errStart: 'Başlatılamadı: ', errCore: 'Çekirdek yüklenemedi: ',
+      units: ['B', 'KB', 'MB', 'GB', 'TB'], dec: ',',
+      m: [['SNI bölme', 'Site adının ortasından ikiye böler'], ['TLS ve TCP', 'Hem TLS hem TCP seviyesinde böler'],
+          ['İlk bayt', 'İlk baytı tek başına gönderir'], ['3 parça', 'Üç parçaya böler'],
+          ['TLS kayıt', 'İki TLS kaydı olarak gönderir'], ['Düz', 'Parçalamaz; karşılaştırma için']]
+    },
+    en: {
+      netSearch: 'Looking for network', noNet: 'No connection', wifi: 'Wi-Fi', mobile: 'Mobile data',
+      off: 'Off', on: 'On', starting: 'Starting', start: 'Start', stop: 'Stop',
+      tapStart: 'Tap to start.', permHint: 'If a permission prompt appears, accept it.',
+      running: 'Connections are being sent in pieces.',
+      conns: 'Connections', down: 'Downloaded', up: 'Uploaded',
+      method: 'Method', auto: 'Automatic', manual: 'Choose',
+      noteAuto: 'Finds the method that works on each network and remembers it.',
+      noteManual: 'If the method you pick doesn’t work, connections won’t open; you can switch back to Automatic.',
+      noteChoose: 'Pick a method from the list. Automatic runs until you do.',
+      kvNet: 'Network', kvStrat: 'Working method', kvFb: 'Retried',
+      helpQ: 'Phone getting hot or connection dropping?',
+      h1: 'In battery settings, choose “No restrictions” for this app so the system doesn’t close it in the background.',
+      h2: 'Lock the app’s card in the recent apps screen.',
+      h3: 'Turn it off with the button when you’re not using it; nothing runs while it’s off.',
+      battery: 'Open battery settings',
+      language: 'Language', theme: 'Theme', themeModern: 'Modern', themeClassic: 'Classic',
+      errPerm: 'VPN permission was not granted. Tap again and allow it.',
+      errStart: 'Could not start: ', errCore: 'Core failed to load: ',
+      units: ['B', 'KB', 'MB', 'GB', 'TB'], dec: '.',
+      m: [['SNI split', 'Splits in the middle of the site name'], ['TLS and TCP', 'Splits at both TLS and TCP level'],
+          ['First byte', 'Sends the first byte on its own'], ['3 parts', 'Splits into three pieces'],
+          ['TLS records', 'Sends as two TLS records'], ['Plain', 'No splitting; for comparison']]
+    },
+    ru: {
+      netSearch: 'Поиск сети', noNet: 'Нет подключения', wifi: 'Wi-Fi', mobile: 'Мобильные данные',
+      off: 'Выключено', on: 'Включено', starting: 'Запуск', start: 'Запустить', stop: 'Выключить',
+      tapStart: 'Нажмите, чтобы запустить.', permHint: 'Если появится запрос разрешения, подтвердите его.',
+      running: 'Соединения отправляются по частям.',
+      conns: 'Соединения', down: 'Загружено', up: 'Отправлено',
+      method: 'Метод', auto: 'Авто', manual: 'Вручную',
+      noteAuto: 'Сам находит метод, который работает в каждой сети, и запоминает его.',
+      noteManual: 'Если выбранный метод не работает, соединения не откроются; можно вернуться к автоматическому режиму.',
+      noteChoose: 'Выберите метод из списка. Пока не выбран, работает автоматический режим.',
+      kvNet: 'Сеть', kvStrat: 'Рабочий метод', kvFb: 'Повторных попыток',
+      helpQ: 'Телефон греется или соединение обрывается?',
+      h1: 'В настройках батареи выберите для приложения «Без ограничений», чтобы система не закрывала его в фоне.',
+      h2: 'Закрепите карточку приложения в списке недавних.',
+      h3: 'Когда не пользуетесь, выключайте кнопкой: в выключенном состоянии ничего не работает.',
+      battery: 'Открыть настройки батареи',
+      language: 'Язык', theme: 'Тема', themeModern: 'Современная', themeClassic: 'Классическая',
+      errPerm: 'Разрешение VPN не выдано. Нажмите ещё раз и разрешите.',
+      errStart: 'Не удалось запустить: ', errCore: 'Не удалось загрузить ядро: ',
+      units: ['Б', 'КБ', 'МБ', 'ГБ', 'ТБ'], dec: ',',
+      m: [['Разделение SNI', 'Делит посередине имени сайта'], ['TLS и TCP', 'Делит на уровне TLS и TCP'],
+          ['Первый байт', 'Отправляет первый байт отдельно'], ['3 части', 'Делит на три части'],
+          ['Записи TLS', 'Отправляет двумя записями TLS'], ['Без разделения', 'Не делит; для сравнения']]
+    },
+    es: {
+      netSearch: 'Buscando red', noNet: 'Sin conexión', wifi: 'Wi-Fi', mobile: 'Datos móviles',
+      off: 'Apagado', on: 'Encendido', starting: 'Iniciando', start: 'Iniciar', stop: 'Apagar',
+      tapStart: 'Toca para iniciar.', permHint: 'Si aparece una solicitud de permiso, acéptala.',
+      running: 'Las conexiones se envían fragmentadas.',
+      conns: 'Conexiones', down: 'Descargado', up: 'Enviado',
+      method: 'Método', auto: 'Automático', manual: 'Elegir',
+      noteAuto: 'Encuentra el método que funciona en cada red y lo recuerda.',
+      noteManual: 'Si el método elegido no funciona, las conexiones no se abrirán; puedes volver a Automático.',
+      noteChoose: 'Elige un método de la lista. Hasta entonces funciona el modo Automático.',
+      kvNet: 'Red', kvStrat: 'Método activo', kvFb: 'Reintentos',
+      helpQ: '¿El teléfono se calienta o se corta la conexión?',
+      h1: 'En los ajustes de batería, elige «Sin restricciones» para esta app; así el sistema no la cierra en segundo plano.',
+      h2: 'Fija la tarjeta de la app en la pantalla de apps recientes.',
+      h3: 'Apágala con el botón cuando no la uses; apagada, no ejecuta nada.',
+      battery: 'Abrir ajustes de batería',
+      language: 'Idioma', theme: 'Tema', themeModern: 'Moderno', themeClassic: 'Clásico',
+      errPerm: 'No se concedió el permiso de VPN. Toca de nuevo y permítelo.',
+      errStart: 'No se pudo iniciar: ', errCore: 'No se pudo cargar el núcleo: ',
+      units: ['B', 'KB', 'MB', 'GB', 'TB'], dec: ',',
+      m: [['División de SNI', 'Divide por la mitad del nombre del sitio'], ['TLS y TCP', 'Divide a nivel TLS y TCP'],
+          ['Primer byte', 'Envía el primer byte solo'], ['3 partes', 'Divide en tres partes'],
+          ['Registros TLS', 'Envía como dos registros TLS'], ['Sin dividir', 'No fragmenta; para comparar']]
+    },
+    zh: {
+      netSearch: '正在查找网络', noNet: '无网络连接', wifi: 'Wi-Fi', mobile: '移动数据',
+      off: '已关闭', on: '已开启', starting: '正在启动', start: '启动', stop: '关闭',
+      tapStart: '点按即可启动。', permHint: '如果弹出权限请求，请允许。',
+      running: '连接正在被分片发送。',
+      conns: '连接数', down: '已下载', up: '已上传',
+      method: '方式', auto: '自动', manual: '手动选择',
+      noteAuto: '自动找出每个网络上可用的方式并记住。',
+      noteManual: '如果所选方式不可用，连接将无法打开；可以切换回自动。',
+      noteChoose: '从列表中选择一种方式。选择之前将使用自动模式。',
+      kvNet: '网络', kvStrat: '当前方式', kvFb: '重试次数',
+      helpQ: '手机发热或连接中断？',
+      h1: '在电池设置中为本应用选择“无限制”，避免系统在后台将其关闭。',
+      h2: '在最近任务界面中锁定本应用的卡片。',
+      h3: '不使用时用按钮关闭；关闭后不会运行任何内容。',
+      battery: '打开电池设置',
+      language: '语言', theme: '主题', themeModern: '现代', themeClassic: '经典',
+      errPerm: '未授予 VPN 权限。请再次点按并允许。',
+      errStart: '无法启动：', errCore: '核心加载失败：',
+      units: ['B', 'KB', 'MB', 'GB', 'TB'], dec: '.',
+      m: [['SNI 拆分', '在网站名称中间拆开'], ['TLS 与 TCP', '在 TLS 和 TCP 两层拆分'],
+          ['首字节', '单独发送第一个字节'], ['三段', '拆成三段'],
+          ['TLS 记录', '作为两条 TLS 记录发送'], ['不拆分', '不做拆分，仅供对比']]
+    }
+  };
 
   /* Tarayıcıda denemek için sahte köprü (?demo=on|off|wifi|hata|elle). */
   function mockBridge() {
     var q = new URLSearchParams(location.search).get('demo') || 'off';
     var st = { running: q !== 'off' && q !== 'hata', mode: q === 'elle' ? 's2' : 'auto',
       net: { type: q === 'wifi' ? 'wifi' : 'mobile', operator: 'Turkcell' },
-      error: q === 'hata' ? 'VPN izni verilmedi. Tekrar dokun ve izin ver.' : '',
-      stats: { active: 14, down: 183500000, up: 9400000, strategy: 'İlk bayt', fallbacks: 3 } };
-    return {
-      state: function () { if (st.running) { st.stats.down += 91000; st.stats.up += 6000; } return JSON.stringify(st); },
-      toggle: function () { st.running = !st.running; st.error = ''; },
-      setMode: function (m) { st.mode = m; },
-      batterySettings: function () {}
-    };
-  }
-  var bridge = window.Android || mockBridge();
-
-  function fmtBytes(b) {
-    if (b < 1024) return b + ' B';
-    var u = ['KB', 'MB', 'GB', 'TB'], i = -1;
-    do { b /= 1024; i++; } while (b >= 1024 && i < 3);
-    return (b >= 100 ? b.toFixed(0) : b.toFixed(1)).replace('.', ',') + ' ' + u[i];
-  }
-  function netLabel(n) {
-    if (!n || n.type === 'none') return 'Bağlantı yok';
-    var t = n.type === 'wifi' ? 'Wi-Fi' : 'Mobil veri';
-    return n.type === 'wifi' || !n.operator ? t : n.operator + ' · ' + t;
-  }
-
-  var pendingUntil = 0, listBuilt = false, manualOpen = false;
-
-  function buildList() {
-    var ul = $('list');
-    METHODS.forEach(function (m) {
-      var li = document.createElement('li'), b = document.createElement('button');
-      b.setAttribute('role', 'radio'); b.dataset.m = m[0];
-      b.innerHTML = '<span class="o"></span><span></span><small></small>';
-      b.children[1].textContent = m[1]; b.children[2].textContent = m[2];
-      b.onclick = function () { bridge.setMode(m[0]); poll(); };
-      li.appendChild(b); ul.appendChild(li);
-    });
-    listBuilt = true;
-  }
-
-  function render(s) {
-    var running = !!s.running, busy = !running && Date.now() < pendingUntil && !s.error;
-    if (running || s.error) pendingUntil = 0;
-    var cls = document.body.classList;
-    cls.toggle('on', running); cls.toggle('busy', busy);
-    cls.toggle('nonet', !!s.net && s.net.type === 'none');
-
-    $('power').setAttribute('aria-pressed', running ? 'true' : 'false');
-    $('power').setAttribute('aria-label', running ? 'Kapat' : 'Başlat');
-    $('state').textContent = busy ? 'Başlatılıyor' : running ? 'Açık' : 'Kapalı';
-    var sub = $('sub');
-    sub.className = s.error ? 'err' : '';
-    sub.textContent = s.error ? s.error :
-      busy ? 'İzin penceresi çıkarsa onayla.' :
-      running ? 'Bağlantılar parçalanarak gönderiliyor.' : 'Başlatmak için dokun.';
-
-    var label = netLabel(s.net);
-    $('netText').textContent = label; $('kvNet').textContent = label;
-
-    var st = s.stats || {};
-    $('sAct').textContent = st.active || 0;
-    $('sDown').textContent = fmtBytes(st.down || 0);
-    $('sUp').textContent = fmtBytes(st.up || 0);
-    $('kvStrat').textContent = running ? (st.strategy || '–') : '–';
-    $('kvFb').textContent = st.fallbacks || 0;
-
-    var manual = s.mode && s.mode !== 'auto';
-    if (!listBuilt) buildList();
-    if (manual) manualOpen = true;
-    var showList = manualOpen;
-    $('seg').dataset.v = showList ? 'elle' : 'auto';
-    $('bAuto').setAttribute('aria-checked', showList ? 'false' : 'true');
-    $('bManual').setAttribute('aria-checked', showList ? 'true' : 'false');
-    $('list').classList.toggle('open', showList);
-    $('modeNote').textContent = !showList
-      ? 'Her ağda çalışan yöntemi kendisi bulur ve hatırlar.'
-      : manual
-        ? 'Seçtiğin yöntem çalışmazsa bağlantılar açılmaz; Otomatik’e dönebilirsin.'
-        : 'Listeden bir yöntem seç. Seçene kadar Otomatik çalışır.';
-    Array.prototype.forEach.call($('list').querySelectorAll('button'), function (b) {
-      b.setAttribute('aria-checked', b.dataset.m === s.mode ? 'true' : 'false');
-    });
-  }
-
-  function poll() {
-    if (document.hidden) return;
-    try { render(JSON.parse(bridge.state())); } catch (e) { /* köprü hazır değil */ }
-  }
-
-  $('power').onclick = function () {
-    pendingUntil = Date.now() + 9000;
-    bridge.toggle();
-    poll();
-  };
-  $('bAuto').onclick = function () { manualOpen = false; bridge.setMode('auto'); poll(); };
-  $('bManual').onclick = function () { manualOpen = true; poll(); };
-  $('battery').onclick = function () { bridge.batterySettings(); };
-
-  document.addEventListener('visibilitychange', poll);
-  setInterval(poll, 1500);
-  poll();
-})();
-</script>
-</body>
-</html>
+      error:
