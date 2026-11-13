@@ -31,15 +31,24 @@ class MainActivity : Activity() {
         const val REQ_VPN = 1
         const val REQ_NOTIF = 2
         val MODE_RE = Regex("^(auto|s[0-5])$")
+        val LANG_RE = Regex("^(tr|en|ru|es|zh)$")
+        val THEME_RE = Regex("^(modern|classic)$")
+    }
+
+    private fun barColor(): Int =
+        Color.parseColor(if (prefs.getString("theme", "modern") == "classic") "#101426" else "#0c0a14")
+
+    private fun applyBars() {
+        val c = barColor()
+        window.statusBarColor = c
+        window.navigationBarColor = c
+        if (::web.isInitialized) web.setBackgroundColor(c)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        window.statusBarColor = Color.parseColor("#101426")
-        window.navigationBarColor = Color.parseColor("#101426")
-
         web = WebView(this)
-        web.setBackgroundColor(Color.parseColor("#101426"))
+        applyBars()
         web.overScrollMode = WebView.OVER_SCROLL_NEVER
         web.settings.javaScriptEnabled = true
         web.settings.allowFileAccess = false
@@ -169,6 +178,18 @@ class MainActivity : Activity() {
             if (DpiVpnService.running) {
                 try { Core.setMode(m) } catch (e: Throwable) {}
             }
+        }
+
+        @JavascriptInterface
+        fun getPref(k: String): String =
+            if (k == "lang" || k == "theme") (prefs.getString(k, "") ?: "") else ""
+
+        @JavascriptInterface
+        fun setPref(k: String, v: String) {
+            val ok = (k == "lang" && LANG_RE.matches(v)) || (k == "theme" && THEME_RE.matches(v))
+            if (!ok) return
+            prefs.edit().putString(k, v).apply()
+            if (k == "theme") runOnUiThread { applyBars() }
         }
 
         @JavascriptInterface
