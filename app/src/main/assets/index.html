@@ -372,4 +372,185 @@ details li + li { margin-top: 6px; }
     var q = new URLSearchParams(location.search).get('demo') || 'off';
     var st = { running: q !== 'off' && q !== 'hata', mode: q === 'elle' ? 's2' : 'auto',
       net: { type: q === 'wifi' ? 'wifi' : 'mobile', operator: 'Turkcell' },
-      error:
+      error: q === 'hata' ? 'VPN izni verilmedi. Tekrar dokun ve izin ver.' : '',
+      stats: { active: 14, down: 183500000, up: 9400000, strategy: 'İlk bayt', fallbacks: 3 } };
+    return {
+      state: function () { if (st.running) { st.stats.down += 91000; st.stats.up += 6000; } return JSON.stringify(st); },
+      toggle: function () { st.running = !st.running; st.error = ''; },
+      setMode: function (m) { st.mode = m; },
+      batterySettings: function () {}
+    };
+  }
+  var bridge = window.Android || mockBridge();
+
+  /* --- Kalıcı tercihler: önce uygulama (SharedPreferences), yoksa localStorage --- */
+  function getPref(k) {
+    try { if (typeof bridge.getPref === 'function') { var v = bridge.getPref(k); if (v) return String(v); } } catch (e) {}
+    try { return localStorage.getItem('dpi.' + k) || ''; } catch (e) { return ''; }
+  }
+  function setPref(k, v) {
+    try { if (typeof bridge.setPref === 'function') bridge.setPref(k, v); } catch (e) {}
+    try { localStorage.setItem('dpi.' + k, v); } catch (e) {}
+  }
+
+  function systemLang() {
+    var l = ((navigator.language || 'en') + '').slice(0, 2).toLowerCase();
+    return LANGS.indexOf(l) >= 0 ? l : 'en';
+  }
+  var lang = getPref('lang'); if (LANGS.indexOf(lang) < 0) lang = systemLang();
+  var theme = getPref('theme'); if (THEMES.indexOf(theme) < 0) theme = 'modern';
+  var T = I18N[lang];
+  var last = null;
+
+  function fmtBytes(b) {
+    var u = T.units;
+    if (b < 1024) return b + ' ' + u[0];
+    var i = 0;
+    do { b /= 1024; i++; } while (b >= 1024 && i < 4);
+    return (b >= 100 ? b.toFixed(0) : b.toFixed(1)).replace('.', T.dec) + ' ' + u[i];
+  }
+  function netLabel(n) {
+    if (!n || n.type === 'none') return T.noNet;
+    var t = n.type === 'wifi' ? T.wifi : T.mobile;
+    return n.type === 'wifi' || !n.operator ? t : n.operator + ' · ' + t;
+  }
+  // Uygulamadan gelen hata metinleri Türkçe; bilinenleri seçili dile çevir.
+  function errText(e) {
+    if (e.indexOf('VPN izni verilmedi') === 0) return T.errPerm;
+    if (e.indexOf('Başlatılamadı: ') === 0) return T.errStart + e.slice(15);
+    if (e.indexOf('Çekirdek yüklenemedi: ') === 0) return T.errCore + e.slice(22);
+    return e;
+  }
+
+  var pendingUntil = 0, listBuilt = false, manualOpen = false;
+
+  function buildList() {
+    var ul = $('list');
+    ul.textContent = '';
+    METHOD_IDS.forEach(function (id) {
+      var li = document.createElement('li'), b = document.createElement('button');
+      b.setAttribute('role', 'radio'); b.dataset.m = id;
+      b.innerHTML = '<span class="o"></span><span></span><small></small>';
+      b.onclick = function () { bridge.setMode(id); poll(); };
+      li.appendChild(b); ul.appendChild(li);
+    });
+    listBuilt = true;
+  }
+  function fillList() {
+    Array.prototype.forEach.call($('list').querySelectorAll('button'), function (b, i) {
+      b.children[1].textContent = T.m[i][0]; b.children[2].textContent = T.m[i][1];
+    });
+  }
+
+  function buildLangs() {
+    var box = $('langs');
+    box.textContent = '';
+    LANGS.forEach(function (l) {
+      var b = document.createElement('button');
+      b.className = 'chip'; b.setAttribute('role', 'radio'); b.dataset.l = l; b.textContent = NATIVE[l];
+      b.lang = l;
+      b.onclick = function () { setLang(l); };
+      box.appendChild(b);
+    });
+  }
+
+  function applyTheme() {
+    document.documentElement.dataset.theme = theme;
+    $('themeSeg').dataset.v = theme === 'modern' ? 'a' : 'b';
+    $('tModern').setAttribute('aria-checked', theme === 'modern' ? 'true' : 'false');
+    $('tClassic').setAttribute('aria-checked', theme === 'classic' ? 'true' : 'false');
+  }
+
+  function applyLang() {
+    T = I18N[lang];
+    document.documentElement.lang = lang;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-i]'), function (el) {
+      el.textContent = T[el.getAttribute('data-i')];
+    });
+    $('seg').setAttribute('aria-label', T.method);
+    $('list').setAttribute('aria-label', T.method);
+    $('langs').setAttribute('aria-label', T.language);
+    $('themeSeg').setAttribute('aria-label', T.theme);
+    $('gear').setAttribute('aria-label', T.language + ' / ' + T.theme);
+    Array.prototype.forEach.call($('langs').children, function (b) {
+      b.setAttribute('aria-checked', b.dataset.l === lang ? 'true' : 'false');
+    });
+    if (listBuilt) fillList();
+    render(last || { running: false, net: { type: 'none' }, stats: {} });
+  }
+
+  function setLang(l) { lang = l; setPref('lang', l); applyLang(); }
+  function setTheme(t) { theme = t; setPref('theme', t); applyTheme(); }
+
+  function render(s) {
+    last = s;
+    var running = !!s.running, busy = !running && Date.now() < pendingUntil && !s.error;
+    if (running || s.error) pendingUntil = 0;
+    var cls = document.body.classList;
+    cls.toggle('on', running); cls.toggle('busy', busy);
+    cls.toggle('nonet', !!s.net && s.net.type === 'none');
+
+    $('power').setAttribute('aria-pressed', running ? 'true' : 'false');
+    $('power').setAttribute('aria-label', running ? T.stop : T.start);
+    $('state').textContent = busy ? T.starting : running ? T.on : T.off;
+    var sub = $('sub');
+    sub.className = s.error ? 'err' : '';
+    sub.textContent = s.error ? errText(s.error) :
+      busy ? T.permHint : running ? T.running : T.tapStart;
+
+    var label = netLabel(s.net);
+    $('netText').textContent = s.net ? label : T.netSearch; $('kvNet').textContent = label;
+
+    var st = s.stats || {};
+    $('sAct').textContent = st.active || 0;
+    $('sDown').textContent = fmtBytes(st.down || 0);
+    $('sUp').textContent = fmtBytes(st.up || 0);
+    var idx = CORE_NAMES.indexOf(st.strategy);
+    $('kvStrat').textContent = running && st.strategy ? (idx >= 0 ? T.m[idx][0] : st.strategy) : '–';
+    $('kvFb').textContent = st.fallbacks || 0;
+
+    var manual = s.mode && s.mode !== 'auto';
+    if (!listBuilt) { buildList(); fillList(); }
+    if (manual) manualOpen = true;
+    var showList = manualOpen;
+    $('seg').dataset.v = showList ? 'b' : 'a';
+    $('bAuto').setAttribute('aria-checked', showList ? 'false' : 'true');
+    $('bManual').setAttribute('aria-checked', showList ? 'true' : 'false');
+    $('list').classList.toggle('open', showList);
+    $('modeNote').textContent = !showList ? T.noteAuto : manual ? T.noteManual : T.noteChoose;
+    Array.prototype.forEach.call($('list').querySelectorAll('button'), function (b) {
+      b.setAttribute('aria-checked', b.dataset.m === s.mode ? 'true' : 'false');
+    });
+  }
+
+  function poll() {
+    if (document.hidden) return;
+    try { render(JSON.parse(bridge.state())); } catch (e) { /* köprü hazır değil */ }
+  }
+
+  $('power').onclick = function () {
+    pendingUntil = Date.now() + 9000;
+    bridge.toggle();
+    poll();
+  };
+  $('bAuto').onclick = function () { manualOpen = false; bridge.setMode('auto'); poll(); };
+  $('bManual').onclick = function () { manualOpen = true; poll(); };
+  $('battery').onclick = function () { bridge.batterySettings(); };
+  $('gear').onclick = function () {
+    var open = $('settings').hidden;
+    $('settings').hidden = !open;
+    $('gear').setAttribute('aria-expanded', open ? 'true' : 'false');
+  };
+  $('tModern').onclick = function () { setTheme('modern'); };
+  $('tClassic').onclick = function () { setTheme('classic'); };
+
+  buildLangs();
+  applyTheme();
+  applyLang();
+  document.addEventListener('visibilitychange', poll);
+  setInterval(poll, 1500);
+  poll();
+})();
+</script>
+</body>
+</html>
